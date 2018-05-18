@@ -47,11 +47,83 @@ class Player extends React.Component {
         durationMilliseconds: 30000
       },
     ];
+
+    this.launchClock()
+    this.state = {
+      playing: true,
+      trackIdx: 0,
+      currentTime: (new Date().toLocaleString())
+    }
   }
+
+  togglePlay(e) {
+    console.log(this, e);
+    if(e.target.id === 'play') {
+      this.setState({ playing: true });
+    } else {
+      this.setState({ playing: false });
+    }
+    this.forceUpdate();
+  }
+
+  toggleNext(e) {
+    console.log(this, e);
+    if(e.target.id === 'next') {
+      var currTrackIdx = this.state.trackIdx;
+      if (currTrackIdx < (this.tracks.length - 1)) {
+        this.setState({ trackIdx: currTrackIdx + 1 });
+      } else {
+        this.setState({ trackIdx: 0 });
+      }
+    }
+    this.forceUpdate();
+  }
+
+  togglePrev(e) {
+    console.log(this, e);
+    if(e.target.id === 'prev') {
+      var currTrackIdx = this.state.trackIdx;
+      if (currTrackIdx > 0) {
+        this.setState({ trackIdx: currTrackIdx - 1 });
+      } else {
+        this.setState({ trackIdx: (this.tracks.length - 1) });
+      }
+    }
+    this.forceUpdate();
+  }
+
+  launchClock() {
+    setInterval(() => {
+      console.log('Updating time...')
+      this.setState({ currentTime: (new Date()).toLocaleString() })
+    }, 1000)
+  }
+
   render() {
+    var playpause
+    if(this.state.playing === false) {
+      playpause = <i id="play" onClick={this.togglePlay.bind(this)} className="fa fa-fw fa-play"></i>;
+    } else {
+      playpause = <i id="pause" onClick={this.togglePlay.bind(this)} className="fa fa-fw fa-pause"></i>;
+    }
+
     return (
       <div>
-        <MediaPlayer />
+        <h1 className="pt-text" >{this.tracks[this.state.trackIdx].trackName}</h1>
+        <h3 className="pt-text" >{this.tracks[this.state.trackIdx].artistName}</h3>
+        <div className="center">
+          <img
+            src={this.tracks[this.state.trackIdx].artworkUrl}
+            alt={this.tracks[this.state.trackIdx].trackName}
+          />
+          <MediaPlayer playing={this.state.playing} track={this.tracks[this.state.trackIdx]} />
+        </div>
+        <div className="controls">
+          <i id="prev" className="fa fa-fw fa-fast-backward" onClick={this.togglePrev.bind(this)}></i>
+          {playpause}
+          <i id="next" className="fa fa-fw fa-fast-forward" onClick={this.toggleNext.bind(this)}></i>
+        </div>
+        <span className="pt-footer">Current date and time is {this.state.currentTime}.</span>
       </div>
     );
   }
@@ -61,17 +133,59 @@ class Player extends React.Component {
 Library documentation: https://www.npmjs.com/package/react-player
 */
 class MediaPlayer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      played: 0,
+      playedSeconds: 0,
+      loadedSeconds: 0
+    }
+  }
+
+  onProgress = state => {
+    console.log('onProgress', state)
+    // We only want to update time slider if we are not currently seeking
+    if (!this.state.seeking) {
+      this.setState(state)
+    }
+  }
+  onSeekMouseDown = e => {
+    this.setState({ seeking: true })
+  }
+  onSeekChange = e => {
+    this.setState({ played: parseFloat(e.target.value) })
+  }
+  onSeekMouseUp = e => {
+    this.setState({ seeking: false })
+    this.player.seekTo(parseFloat(e.target.value))
+  }
+  ref = player => {
+    this.player = player
+  }
   render() {
     return (
       <div>
         <ReactPlayer
-          ref="reactPlayer"
-          playing={true}
-          height={'0px'}
-          width={'0px'}
+          ref={this.ref}
+          playing={this.props.playing}
+          height='100%'
+          width='100%'
           config={{ file: { forceAudio: true } }}
-          // Currently populated with a sample URL.
-          url={"https://p.scdn.co/mp3-preview/6aba2f4e671ffe07fd60807ca5fef82d48146d4c?cid=1cef747d7bdf4c52ac981490515bda71"} />
+          url={this.props.track.mediaUrl}
+          onProgress={this.onProgress}
+          onSeek={e => console.log('onSeek', e)}
+        />
+        <div className="seeker">
+          <span>{Math.floor(this.state.playedSeconds)}s</span>
+          <input
+            type='range' min={0} max={1} step='any'
+            value={this.state.played}
+            onMouseDown={this.onSeekMouseDown}
+            onChange={this.onSeekChange}
+            onMouseUp={this.onSeekMouseUp}
+          />
+          <span>{Math.floor(this.state.loadedSeconds)}s</span>
+        </div>
       </div>
     )
   }
