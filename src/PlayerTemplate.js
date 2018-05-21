@@ -56,57 +56,40 @@ class Player extends React.Component {
     }
   }
 
-  togglePlay(e) {
-    console.log(this, e);
-    if(e.target.id === 'play') {
-      this.setState({ playing: true });
+  handlePlay = (e) => {
+    console.log(this, e.target)
+    this.setState({ playing: !this.state.playing })
+  }
+
+  handleNext = (e) => {
+    console.log(this, e.target)
+    var currTrackIdx = this.state.trackIdx
+    if (currTrackIdx < (this.tracks.length - 1)) {
+      this.setState({ trackIdx: currTrackIdx + 1 })
     } else {
-      this.setState({ playing: false });
+      this.setState({ trackIdx: 0 })
     }
-    this.forceUpdate();
   }
 
-  toggleNext(e) {
-    console.log(this, e);
-    if(e.target.id === 'next') {
-      var currTrackIdx = this.state.trackIdx;
-      if (currTrackIdx < (this.tracks.length - 1)) {
-        this.setState({ trackIdx: currTrackIdx + 1 });
-      } else {
-        this.setState({ trackIdx: 0 });
-      }
+  handlePrev = (e) => {
+    console.log(this, e.target)
+    var currTrackIdx = this.state.trackIdx
+    if (currTrackIdx > 0) {
+      this.setState({ trackIdx: currTrackIdx - 1 })
+    } else {
+      this.setState({ trackIdx: (this.tracks.length - 1) })
     }
-    this.forceUpdate();
-  }
-
-  togglePrev(e) {
-    console.log(this, e);
-    if(e.target.id === 'prev') {
-      var currTrackIdx = this.state.trackIdx;
-      if (currTrackIdx > 0) {
-        this.setState({ trackIdx: currTrackIdx - 1 });
-      } else {
-        this.setState({ trackIdx: (this.tracks.length - 1) });
-      }
-    }
-    this.forceUpdate();
   }
 
   launchClock() {
     setInterval(() => {
-      console.log('Updating time...')
+      // console.log('Updating time...')
       this.setState({ currentTime: (new Date()).toLocaleString() })
     }, 1000)
   }
 
   render() {
-    var playpause
-    if(this.state.playing === false) {
-      playpause = <i id="play" onClick={this.togglePlay.bind(this)} className="fa fa-fw fa-play"></i>;
-    } else {
-      playpause = <i id="pause" onClick={this.togglePlay.bind(this)} className="fa fa-fw fa-pause"></i>;
-    }
-
+    let isPlaying = this.state.playing
     return (
       <div>
         <h1 className="pt-text" >{this.tracks[this.state.trackIdx].trackName}</h1>
@@ -119,9 +102,11 @@ class Player extends React.Component {
           <MediaPlayer playing={this.state.playing} track={this.tracks[this.state.trackIdx]} />
         </div>
         <div className="controls">
-          <i id="prev" className="fa fa-fw fa-fast-backward" onClick={this.togglePrev.bind(this)}></i>
-          {playpause}
-          <i id="next" className="fa fa-fw fa-fast-forward" onClick={this.toggleNext.bind(this)}></i>
+          <i id="prev" className="fa fa-fw fa-fast-backward" onClick={this.handlePrev}></i>
+          <i id={(isPlaying)?'pause':'play'} onClick={this.handlePlay}
+            className={(isPlaying)?'fa fa-fw fa-pause':'fa fa-fw fa-play'}>
+          </i>
+          <i id="next" className="fa fa-fw fa-fast-forward" onClick={this.handleNext}></i>
         </div>
         <span className="pt-footer">Current date and time is {this.state.currentTime}.</span>
       </div>
@@ -143,7 +128,7 @@ class MediaPlayer extends React.Component {
   }
 
   onProgress = state => {
-    console.log('onProgress', state)
+    // console.log('onProgress', state)
     // We only want to update time slider if we are not currently seeking
     if (!this.state.seeking) {
       this.setState(state)
