@@ -48,60 +48,95 @@ class Player extends React.Component {
       },
     ];
 
-    this.launchClock()
     this.state = {
-      playing: true,
       trackIdx: 0,
-      currentTime: (new Date().toLocaleString())
+      playing: true,
+      played: 0
     }
   }
-
   handlePlay = (e) => {
-    console.log(this, e.target)
     this.setState({ playing: !this.state.playing })
   }
-
   handleNext = (e) => {
-    console.log(this, e.target)
-    var currTrackIdx = this.state.trackIdx
+    let currTrackIdx = this.state.trackIdx
     if (currTrackIdx < (this.tracks.length - 1)) {
       this.setState({ trackIdx: currTrackIdx + 1 })
     } else {
       this.setState({ trackIdx: 0 })
     }
   }
-
   handlePrev = (e) => {
-    console.log(this, e.target)
-    var currTrackIdx = this.state.trackIdx
+    let currTrackIdx = this.state.trackIdx
     if (currTrackIdx > 0) {
       this.setState({ trackIdx: currTrackIdx - 1 })
     } else {
       this.setState({ trackIdx: (this.tracks.length - 1) })
     }
   }
-
-  launchClock() {
-    setInterval(() => {
-      // console.log('Updating time...')
-      this.setState({ currentTime: (new Date()).toLocaleString() })
-    }, 1000)
+  onProgress = (state) => {
+    /* We only want to update time slider if we are not currently seeking */
+    if (!this.state.seeking) {
+      this.setState(state)
+    }
   }
-
+  onSeekMouseDown = (e) => {
+    this.setState({ seeking: true })
+  }
+  onSeekChange = (e) => {
+    this.setState({ played: parseFloat(e.target.value) })
+  }
+  onSeekMouseUp = (e) => {
+    this.setState({ seeking: false })
+    this.player.seekTo(parseFloat(e.target.value))
+  }
+  ref = (player) => {
+    this.player = player
+  }
   render() {
     let isPlaying = this.state.playing
+    let trackName = this.tracks[this.state.trackIdx].trackName
+    let trackUrl = this.tracks[this.state.trackIdx].mediaUrl
+    let artistName = this.tracks[this.state.trackIdx].artistName
+    let artworkUrl = this.tracks[this.state.trackIdx].artworkUrl
+    let played = this.state.played
+    let duration = this.state.duration
+    let playedSeconds = this.state.playedSeconds
+    let loadedSeconds = this.state.loadedSeconds
     return (
       <div>
-        <h1 className="pt-text" >{this.tracks[this.state.trackIdx].trackName}</h1>
-        <h3 className="pt-text" >{this.tracks[this.state.trackIdx].artistName}</h3>
+        <h1 className="pt-text" >{trackName}</h1>
+        <h3 className="pt-text" >{artistName}</h3>
         <div className="center">
           <img
-            src={this.tracks[this.state.trackIdx].artworkUrl}
-            alt={this.tracks[this.state.trackIdx].trackName}
+            src={artworkUrl}
+            alt={trackName}
           />
-          <MediaPlayer playing={this.state.playing} track={this.tracks[this.state.trackIdx]} />
+          <div className='player-wrapper'>
+            <ReactPlayer
+              className='react-player'
+              ref={this.ref}
+              playing={isPlaying}
+              height='100%'
+              width='100%'
+              config={{ file: { forceAudio: true } }}
+              url={trackUrl}
+              onProgress={this.onProgress}
+              onSeek={(e) => console.log('onSeek', e)}
+            />
+          </div>
         </div>
         <div className="controls">
+          <div className="seeker">
+            <span>{(playedSeconds)?Math.floor(playedSeconds):0}s</span>
+            <input
+              type='range' min={0} max={1} step='any'
+              value={played}
+              onMouseDown={this.onSeekMouseDown}
+              onChange={this.onSeekChange}
+              onMouseUp={this.onSeekMouseUp}
+            />
+            <span>{(loadedSeconds)?Math.floor(loadedSeconds):0}s</span>
+          </div>
           <i id="prev" className="fa fa-fw fa-fast-backward" onClick={this.handlePrev}></i>
           <i id={(isPlaying)?'pause':'play'} onClick={this.handlePlay}
             className={(isPlaying)?'fa fa-fw fa-pause':'fa fa-fw fa-play'}>
@@ -117,63 +152,5 @@ class Player extends React.Component {
 /*
 Library documentation: https://www.npmjs.com/package/react-player
 */
-class MediaPlayer extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      played: 0,
-      playedSeconds: 0,
-      loadedSeconds: 0
-    }
-  }
-
-  onProgress = state => {
-    // console.log('onProgress', state)
-    // We only want to update time slider if we are not currently seeking
-    if (!this.state.seeking) {
-      this.setState(state)
-    }
-  }
-  onSeekMouseDown = e => {
-    this.setState({ seeking: true })
-  }
-  onSeekChange = e => {
-    this.setState({ played: parseFloat(e.target.value) })
-  }
-  onSeekMouseUp = e => {
-    this.setState({ seeking: false })
-    this.player.seekTo(parseFloat(e.target.value))
-  }
-  ref = player => {
-    this.player = player
-  }
-  render() {
-    return (
-      <div>
-        <ReactPlayer
-          ref={this.ref}
-          playing={this.props.playing}
-          height='100%'
-          width='100%'
-          config={{ file: { forceAudio: true } }}
-          url={this.props.track.mediaUrl}
-          onProgress={this.onProgress}
-          onSeek={e => console.log('onSeek', e)}
-        />
-        <div className="seeker">
-          <span>{Math.floor(this.state.playedSeconds)}s</span>
-          <input
-            type='range' min={0} max={1} step='any'
-            value={this.state.played}
-            onMouseDown={this.onSeekMouseDown}
-            onChange={this.onSeekChange}
-            onMouseUp={this.onSeekMouseUp}
-          />
-          <span>{Math.floor(this.state.loadedSeconds)}s</span>
-        </div>
-      </div>
-    )
-  }
-}
 
 export default Player;

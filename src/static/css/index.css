@@ -4,39 +4,32 @@ body {
   font-family: verdana;
   background-color: white;
 }
-
 .center img {
   margin: 0 auto;
   display: block;
   width: 300px;
   height: 300px;
 }
-
 .center input {
   width: 280px;
 }
-
-.center .seeker {
-  text-align: center;
-  padding: 10px 0
-}
-
 .controls {
   padding: 10px;
   text-align: center;
 }
-
+.controls .seeker {
+  text-align: center;
+  padding: 10px 0
+}
 .pt-text {
   text-align: center;
   padding: 10px 10px;
   margin: 0;
 }
-
 .react-player {
   width: 100%;
   height: 75px;
 }
-
 .pt-footer {
   position: absolute;
   text-align: center;
